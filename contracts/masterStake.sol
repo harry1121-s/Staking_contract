@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./myToken.sol";
 
-contract MasterStake is Ownable{
+contract masterStake is Ownable{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -41,9 +41,8 @@ contract MasterStake is Ownable{
     uint256 public totalWeightage = 0;
     //Block number from where token mining starts.
     uint256 public startBlock;
-
-    //Locking period
-    uint256 lockingPeriod;
+    //Locking period for the pools
+    uint256 public lockingPeriod;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
@@ -59,7 +58,7 @@ contract MasterStake is Ownable{
         uint256 _rewardPerBlock,
         uint256 _bonusEndBlock,
         uint256 _startBlock,
-        uint256 _lockingPeriod,
+        uint256 _lockingPeriod
         ){
             mToken = _mToken;
             devaddr = _devaddr;
