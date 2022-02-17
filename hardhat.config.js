@@ -14,7 +14,7 @@
       solidity: {
           compilers: [
               {
-                  version: "0.7.0",
+                  version: "0.8.4",
                   settings: {
                       optimizer: {
                           enabled: true,

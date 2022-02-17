@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@openzeppelin/test-helpers": "^0.5.15",
     "hardhat": "^2.8.4"
   },
   "devDependencies": {

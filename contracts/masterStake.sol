@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./myToken.sol";
-
+import "hardhat/console.sol";
 contract masterStake is Ownable{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -24,7 +24,7 @@ contract masterStake is Ownable{
     }
 
     //Reward token!
-    myToken public mToken;
+    IERC20 public mToken;
     //Dev address.
     address public devaddr;
     //Rewards per block mined.
@@ -44,16 +44,15 @@ contract masterStake is Ownable{
     //Locking period for the pools
     uint256 public lockingPeriod;
 
-    event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
-    event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
-    event EmergencyWithdraw(
-        address indexed user,
-        uint256 indexed pid,
-        uint256 amount
-    );
-
+    // event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
+    // event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
+    // event EmergencyWithdraw(
+    //     address indexed user,
+    //     uint256 indexed pid,
+    //     uint256 amount
+ 
     constructor(
-        myToken _mToken,
+        IERC20 _mToken,
         address _devaddr,
         uint256 _rewardPerBlock,
         uint256 _bonusEndBlock,
@@ -138,6 +137,8 @@ contract masterStake is Ownable{
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+        console.log(block.number);
+        console.log(pool.lastRewardBlock);
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier =
                 getMultiplier(pool.lastRewardBlock, block.number);
@@ -185,9 +186,11 @@ contract masterStake is Ownable{
     }
 
     function deposit(uint256 _pid, uint256 _amount) public {
+        // console.log("HERE 2");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         updatePool(_pid);
+        // console.log("HERE");
         require(_amount >= pool.minAmount, "MasterStake: Amount too low");
         if (user.amount > 0) {
             uint256 pending =
@@ -196,6 +199,7 @@ contract masterStake is Ownable{
                 );
             safeTokenTransfer(msg.sender, pending);
         }
+        // console.log("HERE 1");
         pool.lpToken.safeTransferFrom(
             address(msg.sender),
             address(this),
@@ -203,11 +207,10 @@ contract masterStake is Ownable{
         );
         user.amount = user.amount.add(_amount);
         user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
-        emit Deposit(msg.sender, _pid, _amount);
     }
 
      function withdraw(uint256 _pid, uint256 _amount) public {
-        require(block.timestamp >= lockingPeriod, "MasterStake: Withdrawal locked");
+        require(block.timestamp > lockingPeriod, "MasterStake: Withdrawal locked");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -220,19 +223,17 @@ contract masterStake is Ownable{
         user.amount = user.amount.sub(_amount);
         user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
         pool.lpToken.safeTransfer(address(msg.sender), _amount);
-        emit Withdraw(msg.sender, _pid, _amount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
-    function emergencyWithdraw(uint256 _pid) public {
-        require(block.timestamp >= lockingPeriod, "MasterStake: Withdrawal locked");
-        PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][msg.sender];
-        pool.lpToken.safeTransfer(address(msg.sender), user.amount);
-        emit EmergencyWithdraw(msg.sender, _pid, user.amount);
-        user.amount = 0;
-        user.rewardDebt = 0;
-    }
+    // function emergencyWithdraw(uint256 _pid) public {
+    //     require(block.timestamp >= lockingPeriod, "MasterStake: Withdrawal locked");
+    //     PoolInfo storage pool = poolInfo[_pid];
+    //     UserInfo storage user = userInfo[_pid][msg.sender];
+    //     pool.lpToken.safeTransfer(address(msg.sender), user.amount);
+    //     user.amount = 0;
+    //     user.rewardDebt = 0;
+    // }
 
     // Safe sushi transfer function, just in case if rounding error causes pool to not have enough SUSHIs.
     function safeTokenTransfer(address _to, uint256 _amount) internal {
@@ -242,6 +243,11 @@ contract masterStake is Ownable{
         } else {
             mToken.transfer(_to, _amount);
         }
+    }
+
+     function dev(address _devaddr) public {
+        require(msg.sender == devaddr, "dev: wut?");
+        devaddr = _devaddr;
     }
     
 }
