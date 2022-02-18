@@ -51,7 +51,7 @@ describe("Staking Contract", function () {
     eve = accounts[3];
 
     const blockNumBefore = await ethers.provider.getBlockNumber();
-    console.log(blockNumBefore);
+    // console.log(blockNumBefore);
     const blockBefore = await ethers.provider.getBlock(blockNumBefore);
     currTime = blockBefore.timestamp;
 
@@ -62,7 +62,7 @@ describe("Staking Contract", function () {
     await mtoken.mint(accounts[0].address, 1000000);
 
     const masterStake = await ethers.getContractFactory("masterStake");
-    mstake = await masterStake.deploy(mtoken.address, accounts[0].address, 5, blockNumBefore + 100, blockNumBefore, currTime + 28*24*60*60);
+    mstake = await masterStake.deploy(mtoken.address, accounts[0].address, 12, blockNumBefore + 100, blockNumBefore, currTime + 28*24*60*60);
     await mstake.deployed();
 
     await mtoken.transfer(mstake.address, "1000000000000000000000000");
@@ -98,6 +98,8 @@ describe("Staking Contract", function () {
     await expect(mstake.connect(alice).add(40, lp1.address, 100, true)).to.be.revertedWith("Ownable: caller is not the owner");
     await mstake.add(40, lp1.address, 100, true);
     await mstake.add(60, lp2.address, 100, true);
+
+    expect(await mstake.poolLength()).to.equal(2);
   });
   
   it("Should allow users to stake LP Tokens", async function(){
@@ -107,17 +109,52 @@ describe("Staking Contract", function () {
     await expect(mstake.connect(alice).deposit(0, 10)).to.be.revertedWith("MasterStake: Amount too low");
 
     await lp1.connect(alice).approve(mstake.address, 1000);
-    await mstake.connect(alice).deposit(0, 100);
+    await mstake.connect(alice).deposit(0, 1000);
     
     await lp1.connect(bob).approve(mstake.address, 1000);
-    console.log(await ethers.provider.getBlockNumber());
-    await mstake.connect(bob).deposit(0, 100);
-    console.log(await ethers.provider.getBlockNumber());
-    console.log(await mstake.userInfo(0,bob.address));
-    // await lp2.connect(alice).approve(mstake.address, 100);
-    // await mstake.connect(alice).deposit(1, 100);
-    // await lp2.connect(eve).approve(mstake.address, 200);
-    // await mstake.connect(eve).deposit(1, 200);
+    // console.log(await ethers.provider.getBlockNumber());
+    await mstake.connect(bob).deposit(0, 1000);
+    // console.log(await ethers.provider.getBlockNumber());
+    // console.log(await mstake.userInfo(0,bob.address));
+    await lp1.connect(eve).approve(mstake.address, 5000);
+    await mstake.connect(eve).deposit(0, 5000);
+    // console.log(await mstake.userInfo(0,eve.address));
+
+    await lp2.connect(alice).approve(mstake.address, 1000);
+    await mstake.connect(alice).deposit(1, 1000);
+    await lp2.connect(bob).approve(mstake.address, 2000);
+    await mstake.connect(bob).deposit(1, 2000);
+    await lp2.connect(eve).approve(mstake.address, 2500);
+    await mstake.connect(eve).deposit(1, 2500);
+
+  });
+
+  it("Should not allow users to withdraw tokens", async function(){
+
+    await expect(mstake.connect(alice).withdraw(0, 100))
+    .to.be.revertedWith("MasterStake: Withdrawal locked");
+
+  });
+
+  it("Should allow users to withdraw tokens", async function(){
+
+    await advancetime(29 * 24 * 60 * 60);
+    await advanceBlock();
+
+    //Withdraw rewards only
+    await mstake.connect(alice).withdraw(0, 0);
+    console.log(await mtoken.balanceOf(alice.address));
+
+    await advancetime(24 * 60 * 60);
+    await advanceBlock();
+
+    await mstake.connect(alice).withdraw(0, 1000);
+    console.log(await mtoken.balanceOf(alice.address));
+
+    console.log(await mstake.userInfo(0,alice.address));
+
+
+
   });
 
 

@@ -1,32 +1,54 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
-const hre = require("hardhat");
+const fs = require('fs');
+const { web3, ethers } = require('hardhat');
+const CONFIG = require("../credentials.json");
+// const nftABI = (JSON.parse(fs.readFileSync('./artifacts/contracts/NFT.sol/NFT.json', 'utf8'))).abi;
 
-async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+contract("Staking deployment", () => {
+    let currTime;
+    // let tx;
 
-  // We get the contract to deploy
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+    const provider = new ethers.providers.JsonRpcProvider(CONFIG["BSCTESTNET"]["URL"]);
+    const signer = new ethers.Wallet(CONFIG["BSCTESTNET"]["PKEY"]);
+    const account = signer.connect(provider);
 
-  await greeter.deployed();
+    before(async () => {
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+      const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+      currTime = blockBefore.timestamp;
 
-  console.log("Greeter deployed to:", greeter.address);
-}
+      const masterStake = await ethers.getContractFactory("masterStake");
+      mstake = await masterStake.deploy("0x6ED852dC8Cdf90c895C05585135B1bE6b876b65b", "0xa3566812a7a6C64aed7731Ac81E77D2C1B5D5485", 12, blockNumBefore + 100, blockNumBefore, currTime + 28*24*60*60);
+      await mstake.deployed();
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+      // nftaddr = new ethers.Contract(nft.address, nftABI, account);
+
+      console.log("NFT deployed at address: ",mstake.address);
+      // console.log(nftaddr.address);
+
+    })
+
+    after(async () => {
+        console.log('\u0007');
+        console.log('\u0007');
+        console.log('\u0007');
+        console.log('\u0007');
+    })
+
+    it("Should deploy the Staking contract",async() => {
+      console.log("Staking contract deployed at address: ",mstake.address);
+    })
+    // it ("should set correct params for NFT mint", async () => {
+		// tx = await nft.setBaseURI("https://ipfs.io/ipfs/");
+		// await tx.wait()
+		// tx = await nft.setProvenanceHash("PROVENANCE");
+		// await tx.wait()
+		// // tx = await nft.addWhiteListedAddresses([accounts[1].address, accounts[2].address, accounts[3].address, accounts[4].address]);
+    // // await tx.wait()
+		// tx = await nft.setPreSale();
+    // await tx.wait()
+    // tx = await nft.setPublicSale();
+    // await tx.wait()
+    // tx = await nft.setNotRevealedURI("NULL");
+    // await tx.wait()
+    // })
+})
