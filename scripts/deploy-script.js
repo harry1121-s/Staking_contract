@@ -17,13 +17,20 @@ contract("Staking deployment", () => {
       currTime = blockBefore.timestamp;
 
       const masterStake = await ethers.getContractFactory("masterStake");
-      mstake = await masterStake.deploy("0x6ED852dC8Cdf90c895C05585135B1bE6b876b65b", "0xa3566812a7a6C64aed7731Ac81E77D2C1B5D5485", 12, blockNumBefore + 100, blockNumBefore, currTime + 28*24*60*60);
+      mstake = await masterStake.deploy("0x6ED852dC8Cdf90c895C05585135B1bE6b876b65b", "0xa3566812a7a6C64aed7731Ac81E77D2C1B5D5485", "12000000000000000000", blockNumBefore + 100, blockNumBefore, currTime + 24*60*60);
       await mstake.deployed();
 
+      // const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
+      // lp1 = await ERC20Mock.deploy("LPToken1", "LP1", "1000000000000000000000000");
+      // await lp1.deployed();
+      // lp2 = await ERC20Mock.deploy("LPToken2", "LP2", "1000000000000000000000000");
+      // await lp2.deployed();
       // nftaddr = new ethers.Contract(nft.address, nftABI, account);
 
-      console.log("NFT deployed at address: ",mstake.address);
-      // console.log(nftaddr.address);
+      console.log("Staking contract deployed at address: ",mstake.address);
+      // console.log("LP1 contract deployed at address: ",lp1.address);
+      // console.log("LP2 contract deployed at address: ",lp2.address);
+      // // console.log(nftaddr.address);
 
     })
 
@@ -37,18 +44,4 @@ contract("Staking deployment", () => {
     it("Should deploy the Staking contract",async() => {
       console.log("Staking contract deployed at address: ",mstake.address);
     })
-    // it ("should set correct params for NFT mint", async () => {
-		// tx = await nft.setBaseURI("https://ipfs.io/ipfs/");
-		// await tx.wait()
-		// tx = await nft.setProvenanceHash("PROVENANCE");
-		// await tx.wait()
-		// // tx = await nft.addWhiteListedAddresses([accounts[1].address, accounts[2].address, accounts[3].address, accounts[4].address]);
-    // // await tx.wait()
-		// tx = await nft.setPreSale();
-    // await tx.wait()
-    // tx = await nft.setPublicSale();
-    // await tx.wait()
-    // tx = await nft.setNotRevealedURI("NULL");
-    // await tx.wait()
-    // })
 })
